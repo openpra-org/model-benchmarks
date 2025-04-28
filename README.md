@@ -1,6 +1,7 @@
 # PRA Model Benchmarking Tool
 
 <a href="https://doi.org/10.5281/zenodo.15297777"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15297777.svg" alt="DOI"></a>
+
 Instrumentation for automating benchmarks using benchexec in Docker.
 
 ## Setup
