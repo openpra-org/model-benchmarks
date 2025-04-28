@@ -1,0 +1,108 @@
+include:
+  - project: 'Templates/ci-configs'
+    file: '/docker-build-publish.yml'
+
+variables:
+  DOCKER_DRIVER: overlay2
+  RESULTS_DIR: results
+  RESULTS_DIR_PATH: /home/benchexec/ft-bench/$RESULTS_DIR
+  TABLE_GENERATOR_CMD: table-generator
+  DOCKER_RUN_ARGS: --name job_$CI_JOB_ID --privileged --cap-add=ALL -v /sys/fs/cgroup:/sys/fs/cgroup -v /etc/localtime:/etc/localtime --read-only-dir / --full-access-dir /home/benchexec benchexec
+
+stages:
+  - build
+  - test
+  - run
+  - publish
+
+Build:
+  extends: .publish
+  variables:
+    DOCKERFILE: .
+  stage: build
+
+.run:
+  image: docker:latest
+  needs:
+   - Tests
+  artifacts:
+    paths:
+      - ./$RESULTS_DIR/*
+  before_script:
+    - docker rm job_$CI_JOB_ID || true
+    - docker rmi ft-bench:image_$CI_JOB_ID || true
+  script:
+    - docker build --no-cache --tag ft-bench:image_$CI_JOB_ID .
+    - docker run $DOCKER_RUN_ARGS ft-bench:image_$CI_JOB_ID $BENCHEXEC_TASK $BENCHEXEC_CONFIG
+    - mkdir -p $RESULTS_DIR && docker cp job_$CI_JOB_ID:$RESULTS_DIR_PATH .
+  after_script:
+    - docker rm job_$CI_JOB_ID || true
+    - docker rmi ft-bench:image_$CI_JOB_ID || true
+
+Tests:
+  stage: test
+  extends: .run
+  needs:
+    - Build
+  variables:
+    BENCHEXEC_TASK: /tasks/tests/benchmark.xml
+    BENCHEXEC_CONFIG: "@config/base.cfg"
+
+Demo:
+  stage: run
+  extends: .run
+  variables:
+    BENCHEXEC_TASK: /tasks/tests/benchmark.xml
+    BENCHEXEC_CONFIG: "@config/base.cfg"
+
+SCRAM:
+  stage: run
+  extends: .run
+  parallel:
+    matrix:
+      - BENCHEXEC_TASK: [ /tasks/scram/scram-mocus-mcub.xml, /tasks/scram/scram-zbdd.xml, /tasks/scram/scram-bdd.xml, /tasks/scram/scram-mocus-rareevent.xml ]
+        BENCHEXEC_CONFIG: [ "@config/fast-non-ccf.cfg","@config/fast-ccf.cfg" ]
+
+XFTA:
+  stage: run
+  extends: .run
+  parallel:
+    matrix:
+      - BENCHEXEC_TASK: [ /tasks/xfta/xfta.xml ]
+        BENCHEXEC_CONFIG: [ "@config/fast-non-ccf.cfg","@config/fast-ccf.cfg" ]
+
+SAPHSOLVE:
+  stage: run
+  extends: .run
+  parallel:
+    matrix:
+      - BENCHEXEC_TASK: [ /tasks/saphsolve/saphsolve.xml ]
+        BENCHEXEC_CONFIG: [ "@config/fast-non-ccf.cfg","@config/fast-ccf.cfg" ]
+
+FTREX:
+  stage: run
+  extends: .run
+  parallel:
+    matrix:
+      - BENCHEXEC_TASK: [ /tasks/ftrex/ftrex.xml ]
+        BENCHEXEC_CONFIG: "@config/base.cfg"
+
+
+pages:
+  image:
+    name: $IMAGE
+    entrypoint: [""]
+  artifacts:
+    paths:
+      - ./$RESULTS_DIR/*
+      - public
+  stage: publish    
+  needs:
+    - Demo
+    - SCRAM
+    - XFTA
+    - FTREX
+    - SAPHSOLVE
+  script:
+    - mkdir -p public && table-generator $RESULTS_DIR/*.xml* -n index -o public
+    - mv public/index.table.html public/index.html

@@ -1,0 +1,44 @@
+version: "3.4"
+
+x-base: &base-config
+  build: .
+  volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+#    - ${REPO_DIR:-./}:/home/benchexec/ft-bench
+    - ./:/home/benchexec/ft-bench
+  cap_add:
+    - ALL
+  privileged: true
+  entrypoint: ["benchexec", "--full-access-dir", "/home/benchexec", "--no-container"]
+
+services:
+  tests:
+    <<: *base-config
+    command: [ "tasks/tests/benchmark.xml" ]
+    
+  xfta:
+    <<: *base-config
+    command: ["tasks/xfta/xfta.xml", "@config/fast-non-ccf.cfg"]
+
+  saphsolve:
+    <<: *base-config
+    command: ["tasks/saphsolve/saphsolve.xml"]
+#
+#  all:
+#    <<: *base-config
+#    command: ["--memorylimit", "64 GB", "-T", "24h", "tasks/saphsolve.xml", "tasks/xfta.xml", "tasks/scram.xml"]
+#
+#  fast-queue:
+#    <<: *base-config
+#    command: ["--memorylimit", "64 GB", "-T", "24h", "-r", "fast-queue", "tasks/scram-bdd.xml", "tasks/scram-zbdd.xml", "tasks/scram-mocus-mcub.xml", "tasks/scram-mocus-rareevent.xml", "tasks/xfta.xml", "tasks/saphsolve.xml"]
+
+  postprocess:
+    <<: *base-config
+    entrypoint: ["table-generator"]
+    command: ["results/*.xml", "-n", "index"]
+
+  shell:
+    <<: *base-config
+    entrypoint: ["/bin/bash"]
+    command: []

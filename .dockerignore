@@ -1,0 +1,7 @@
+*
+!bin/
+!config/
+!models/
+!tasks/
+!docker/
+.DS_Store

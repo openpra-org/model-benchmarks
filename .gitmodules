@@ -1,0 +1,3 @@
+[submodule "benchexec"]
+	path = benchexec
+	url = git@gitlab.openpra.org:publics/benchexec.git

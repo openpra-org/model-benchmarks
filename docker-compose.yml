@@ -1,0 +1,46 @@
+version: "3.4"
+
+services:
+  ftrex:
+    build: ./
+    container_name: ftrex
+    shm_size: "32g"
+    privileged: true
+    cap_add:
+      - ALL
+    environment:
+      TZ: "America/New_York"
+    tty: true
+    stdin_open: true
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          memory: 16G
+    volumes:
+      - "/sys/fs/cgroup:/sys/fs/cgroup:rw"
+      - "outputs:/outputs"
+      - "results:/home/benchexec/results"
+    command: |
+      /bin/bash -c '
+      mkdir -p /outputs/models/ftrex/ID /outputs/models/ftrex/Name
+      sudo chown -R benchexec:benchexec /home/benchexec/results /sys/fs/cgroup
+      entrypoint echo "done"
+      benchexec --walltimelimit 15min --read-only-dir=/home/benchexec/.wine --full-access-dir=/ --full-access-dir=/home /tasks/ftrex/ftrex-verify-only.xml && \
+      #benchexec --walltimelimit 15min --memorylimit 16GB --read-only-dir=/home/benchexec/.wine --full-access-dir=/ --full-access-dir=/home /tasks/ftrex/ftrex-verify-only.xml && \
+      #benchexec --read-only-dir=/home/benchexec/.wine --full-access-dir=/ --full-access-dir=/home /tasks/ftrex/ftrex-verify-only.xml && \
+      tail -F /dev/null
+      '
+
+configs:
+  ftrex-key-config:
+    external: true
+  ftrex-serial-config:
+    external: true
+
+volumes:
+  outputs:
+  results:
+
+#docker build -t packages.space.openpra.org/p/openpra/containers/ft-bench:v0 .
