@@ -1,4 +1,8 @@
-# Fault Tree Benchmarking Tool
+# PRA Model Benchmarking Tool
+
+<a href="https://doi.org/10.5281/zenodo.15297778"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15297778.svg" alt="DOI"></a>
+
+Instrumentation for automating benchmarks using benchexec in Docker.
 
 ## Setup
 1. Start by cloning this repository
