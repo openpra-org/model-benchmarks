@@ -1,8 +1,3 @@
-
-chown /home/benchexec
-root@7f1c68912220:/home/benchexec# benchexec /tasks/xfta/xfta.xml --read-only-dir=/ --full-access-dir=/sys/fs/cgroup --full-access-dir=/home/benchexec/ --full-access-dir=/root/.wine
-
-
 # Fault Tree Benchmarking Tool
 
 ## Setup
@@ -42,6 +37,7 @@ $ MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/mnt ft-bench:benchexec
 TODO:
 * [ ] Document steps to run the benchexec script on bare-metal.
 
-1. SCRAM: `benchexec scripts/scram-bench.xml --read-only-dir /`
-2. SAPHSOLVE: `benchexec scripts/saphsolve-bench.xml --read-only-dir /`
-3. XFTA: `benchexec scripts/xfta-bench.xml --read-only-dir /`
+1. SCRAM: `benchexec tasks/scram.xml --read-only-dir /`
+2. SAPHSOLVE: `benchexec tasks/saphsolve.xml --read-only-dir /`
+3. XFTA: `benchexec tasks/xfta/xfta.xml --read-only-dir /`
+4. FTREX: `benchexec scripts/ftrex/ftrex.xml --read-only-dir /`
