@@ -4,9 +4,9 @@ FROM ${BASE_IMAGE}:${TAG}
 
 COPY ./bin/*.deb /opt
 COPY ./bin/amd64/ /usr/local/bin/
-COPY ./bin/ftrex /opt/ftrex
-COPY ./bin/cafta /opt/cafta
-COPY ./bin/saphire8 /opt/saphire8
+# COPY ./bin/ftrex /opt/ftrex
+# COPY ./bin/cafta /opt/cafta
+# COPY ./bin/saphire8 /opt/saphire8
 
 ENV DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
@@ -14,7 +14,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV BENCHEXEC_PACKAGES="\
     software-properties-common \
     libcap2 \
-    udev"
+    udev \
+    "
 
 ARG WINE_BRANCH="stable"
 ENV WINE_PACKAGES="\
@@ -38,25 +39,29 @@ ENV WINE_PACKAGES="\
     "
 
 ENV PYTHON_PACKAGES="\
-    python3.9 \
+    python3.10 \
     python3-pip \
-    python3.9-distutils \
+    python3.10-distutils \
     "
 
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt update \
-    && apt install --no-install-recommends -y ${WINE_PACKAGES} ${BENCHEXEC_PACKAGES} \
-    && dpkg --unpack /opt/*.deb \
-    && rm -f /var/lib/dpkg/info/cpu-energy-meter.postinst \
-    && dpkg --configure cpu-energy-meter \
+    && apt install --no-install-recommends -y ${WINE_PACKAGES} ${BENCHEXEC_PACKAGES} ${PYTHON_PACKAGES} \
+    # && apt install ./opt/cpu-energy-meter*.deb \
+    && apt install -y ./opt/benchexec*.deb \
+    # && dpkg --unpack /opt/*.deb \
+    # && rm -f /var/lib/dpkg/info/cpu-energy-meter.postinst \
+    # && dpkg --configure cpu-energy-meter \
+    # && rm -f /var/lib/dpkg/info/benchexec.postinst \
+    # && dpkg --configure benchexec \
     && chmod +x /usr/local/bin/* /usr/bin/* \
-    && wget -nv -O- https://dl.winehq.org/wine-builds/winehq.key | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add - \
+    && wget -nv -O - https://dl.winehq.org/wine-builds/winehq.key | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add - \
     && echo "deb https://dl.winehq.org/wine-builds/ubuntu/ $(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) main" >> /etc/apt/sources.list \
     && dpkg --add-architecture i386 \
     && add-apt-repository ppa:deadsnakes/ppa \
-    && apt install -y --no-install-recommends winehq-${WINE_BRANCH} ${PYTHON_PACKAGES} \
+    && apt install -y --no-install-recommends winehq-${WINE_BRANCH}  \
     && wget -nv -O /usr/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
     && chmod +x /usr/bin/winetricks \
     && locale-gen en_US.UTF-8
@@ -75,12 +80,12 @@ ARG USER_GID=0
 ENV USER_HOME="/home/benchexec"
 
 # Create working directory
-WORKDIR /home/benchexec/build
-COPY docker/benchexec-external/ /home/benchexec/build
-RUN python3.9 -m pip install --upgrade pip setuptools distlib \
-    && sudo python3.9 setup.py install \
-    && sudo python3.9 setup.py sdist \
-    && sudo python3.9 -m pip install --no-cache-dir dist/*.tar.gz
+# WORKDIR /home/benchexec/build
+# COPY docker/benchexec-external/ /home/benchexec/build
+# RUN python3.10 -m pip install --upgrade pip setuptools distlib \
+#     && sudo python3.10 setup.py install \
+#     && sudo python3.10 setup.py sdist \
+#     && sudo python3.10 -m pip install --no-cache-dir dist/*.tar.gz
 
 WORKDIR /home/benchexec
 ENV UDEV=on
@@ -105,8 +110,8 @@ RUN sudo mkdir -p /outputs /results /usr/share/wine/ \
     && /usr/bin/download_gecko_and_mono.sh "$(wine --version | sed -E 's/^wine-//')"
     #wine --version
 
-COPY docker/secrets/ftrex-key /run/secrets/ftrex-key
-COPY docker/secrets/ftrex-serial /run/secrets/ftrex-serial
+# COPY docker/secrets/ftrex-key /run/secrets/ftrex-key
+# COPY docker/secrets/ftrex-serial /run/secrets/ftrex-serial
 
 COPY models /models
 COPY config /config
